@@ -1,7 +1,6 @@
-import 'dart:convert';
-
+import 'package:rest_api_calling_flutter/models/users_details.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:rest_api_calling_flutter/services/user_api.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -11,7 +10,14 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  List<dynamic> users = [];
+  List<Users> users = [];
+
+  @override
+  void initState() {
+    fetchUsers();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -23,37 +29,29 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         centerTitle: true,
       ),
-      floatingActionButton:
-          ElevatedButton(onPressed: fetchUsers, child: Text('Fetch')),
       body: ListView.builder(
           itemCount: users.length,
           itemBuilder: (context, index) {
             final user = users[index];
-            final email = user["email"];
-            final name =
-                '${user["name"]["title"]} ${user["name"]["first"]} ${user["name"]["last"]}';
 
-            final imageUrl = user["picture"]["thumbnail"];
+            final image = user.pictures.thumbnail;
             return ListTile(
-              title: Text(name.toString()),
-              subtitle: Text(email),
+              title: Text(user.fullName),
+              subtitle: Text(user.email),
+              trailing: Text(user.gender),
               leading: ClipRRect(
                 borderRadius: BorderRadius.circular(100),
-                child: Image.network(imageUrl),
+                child: Image.network(image),
               ),
             );
           }),
     );
   }
 
-  void fetchUsers() async {
-    const url = 'https://randomuser.me/api/?results=100';
-    final uri = Uri.parse(url);
-    final response = await http.get(uri);
-    final body = response.body;
-    final json = jsonDecode(body);
+  Future<void> fetchUsers() async {
+    final response = await UserApi.fetchUsers();
     setState(() {
-      users = json['results'];
+      users = response;
     });
   }
 }
